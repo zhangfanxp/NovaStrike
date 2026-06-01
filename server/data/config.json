@@ -1,0 +1,15 @@
+{
+  "game": {
+    "playerHp": 3,
+    "playerSpeed": 320,
+    "enemyBaseSpeed": 120,
+    "enemySpawnInterval": 1000,
+    "difficultyIncreaseInterval": 30000
+  },
+  "score": {
+    "normalEnemy": 100,
+    "fastEnemy": 150,
+    "heavyEnemy": 500,
+    "shooterEnemy": 350
+  }
+}

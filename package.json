@@ -1,0 +1,10 @@
+{
+  "name": "space-strike",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Phaser 飞行射击小游戏，Node + JSON 本地存储",
+  "main": "server/app.js",
+  "scripts": {
+    "start": "node server/app.js"
+  }
+}
