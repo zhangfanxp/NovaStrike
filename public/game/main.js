@@ -7,6 +7,7 @@
 
   const GAME_WIDTH = 960;
   const GAME_HEIGHT = 540;
+  const BGM_TRACK_PATH = './assets/audio/hundouluo.mp3';
 
   const STORAGE_KEYS = {
     token: 'space_strike_token',
@@ -47,6 +48,12 @@
     config: DEFAULT_CONFIG,
     pendingSaveResult: null,
     lastResult: null
+  };
+
+  const BGM = {
+    audio: null,
+    unlocked: false,
+    unlockHandlersBound: false
   };
 
   const EVENTS = new Phaser.Events.EventEmitter();
@@ -98,6 +105,14 @@
     return `${m}:${s}`;
   }
 
+  function getEffectiveVolume() {
+    const maybeNumber = Number(APP.settings.volume);
+    if (!Number.isFinite(maybeNumber)) {
+      return 0.7;
+    }
+    return clamp(maybeNumber, 0, 1);
+  }
+
   function loadSettings() {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.settings);
@@ -116,6 +131,109 @@
 
   function persistSettings() {
     localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(APP.settings));
+  }
+
+  function ensureBackgroundMusic() {
+    if (BGM.audio) {
+      return BGM.audio;
+    }
+
+    const audio = new Audio(BGM_TRACK_PATH);
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = getEffectiveVolume();
+
+    audio.addEventListener('error', () => {
+      console.warn('背景音乐加载失败:', BGM_TRACK_PATH);
+    });
+
+    BGM.audio = audio;
+    return audio;
+  }
+
+  function pauseBackgroundMusic() {
+    if (!BGM.audio) {
+      return;
+    }
+    BGM.audio.pause();
+  }
+
+  async function playBackgroundMusic() {
+    const audio = ensureBackgroundMusic();
+    audio.volume = getEffectiveVolume();
+
+    if (!APP.settings.music || document.hidden) {
+      audio.pause();
+      return;
+    }
+
+    try {
+      await audio.play();
+    } catch {
+      // Autoplay may be blocked before user interaction; it will retry after unlock.
+    }
+  }
+
+  function syncBackgroundMusic() {
+    const audio = ensureBackgroundMusic();
+    audio.volume = getEffectiveVolume();
+
+    if (!APP.settings.music || document.hidden) {
+      pauseBackgroundMusic();
+      return;
+    }
+
+    if (BGM.unlocked) {
+      void playBackgroundMusic();
+    }
+  }
+
+  function unlockAndPlayBackgroundMusic() {
+    if (BGM.unlocked) {
+      syncBackgroundMusic();
+      return;
+    }
+
+    BGM.unlocked = true;
+    void playBackgroundMusic();
+  }
+
+  function bindBackgroundMusicUnlock() {
+    if (BGM.unlockHandlersBound) {
+      return;
+    }
+
+    BGM.unlockHandlersBound = true;
+
+    const unlockOnce = () => {
+      unlockAndPlayBackgroundMusic();
+      window.removeEventListener('pointerdown', unlockOnce);
+      window.removeEventListener('keydown', unlockOnce);
+      window.removeEventListener('touchstart', unlockOnce);
+    };
+
+    window.addEventListener('pointerdown', unlockOnce, { passive: true });
+    window.addEventListener('keydown', unlockOnce);
+    window.addEventListener('touchstart', unlockOnce, { passive: true });
+  }
+
+  function initBackgroundMusic() {
+    ensureBackgroundMusic();
+    bindBackgroundMusicUnlock();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        pauseBackgroundMusic();
+        return;
+      }
+      syncBackgroundMusic();
+    });
+
+    EVENTS.on('settings-changed', () => {
+      syncBackgroundMusic();
+    });
+
+    syncBackgroundMusic();
   }
 
   function showToast(message, type = 'ok') {
@@ -1688,6 +1806,7 @@
   }
 
   wireDomEvents();
+  initBackgroundMusic();
   updateAuthUi();
 
   const phaserConfig = {
