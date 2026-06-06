@@ -10,7 +10,6 @@
   const BGM_TRACK_PATH = './assets/audio/hundouluo.mp3';
 
   const STORAGE_KEYS = {
-    token: 'space_strike_token',
     settings: 'space_strike_settings'
   };
 
@@ -41,7 +40,6 @@
 
   const APP = {
     auth: {
-      token: '',
       user: null
     },
     settings: loadSettings(),
@@ -264,15 +262,8 @@
     document.getElementById(modalId).classList.remove('hidden');
   }
 
-  function setAuth(token, user) {
-    APP.auth.token = token || '';
+  function setAuth(user) {
     APP.auth.user = user || null;
-
-    if (token) {
-      localStorage.setItem(STORAGE_KEYS.token, token);
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.token);
-    }
 
     updateAuthUi();
     EVENTS.emit('auth-changed', APP.auth.user);
@@ -295,16 +286,16 @@
 
   async function apiRequest(pathname, options = {}) {
     const headers = {
-      'Content-Type': 'application/json',
       ...(options.headers || {})
     };
 
-    if (APP.auth.token) {
-      headers.Authorization = `Bearer ${APP.auth.token}`;
+    if (options.body && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
     }
 
     const response = await fetch(pathname, {
       method: options.method || 'GET',
+      credentials: 'same-origin',
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined
     });
@@ -338,7 +329,7 @@
   }
 
   async function tryConsumePendingSave() {
-    if (!APP.pendingSaveResult || !APP.auth.token) {
+    if (!APP.pendingSaveResult || !APP.auth.user) {
       return;
     }
 
@@ -365,19 +356,11 @@
   }
 
   async function restoreSession() {
-    const token = localStorage.getItem(STORAGE_KEYS.token) || '';
-    if (!token) {
-      updateAuthUi();
-      return;
-    }
-
-    APP.auth.token = token;
-
     try {
       const data = await apiRequest('/api/me');
-      setAuth(token, data.user);
+      setAuth(data.user);
     } catch {
-      setAuth('', null);
+      setAuth(null);
     }
   }
 
@@ -443,7 +426,7 @@
   }
 
   async function openMyScoresPanel() {
-    if (!APP.auth.token) {
+    if (!APP.auth.user) {
       showToast('请先登录后查看战绩', 'err');
       openAuthModal('login');
       return;
@@ -1657,7 +1640,7 @@
       createGlowButton(this, GAME_WIDTH / 2, 366, '查看排行榜', () => openLeaderboardPanel(), 260, 50, 'secondary');
       createGlowButton(this, GAME_WIDTH / 2, 424, '返回首页', () => this.scene.start('MenuScene'), 260, 48, 'secondary');
 
-      if (!APP.auth.token) {
+      if (!APP.auth.user) {
         createGlowButton(this, GAME_WIDTH / 2, 482, '登录并保存成绩', () => {
           APP.pendingSaveResult = { ...this.result };
           openAuthModal('login');
@@ -1687,7 +1670,7 @@
     }
 
     async renderSaveHint() {
-      if (!APP.auth.token) {
+      if (!APP.auth.user) {
         this.saveText.setColor('#94a3b8');
         this.saveText.setText('游客模式下不会自动保存成绩，登录后可加入排行榜。');
         return;
@@ -1725,7 +1708,7 @@
       } catch {
         // noop
       }
-      setAuth('', null);
+      setAuth(null);
       showToast('已退出登录', 'ok');
     });
 
@@ -1746,7 +1729,7 @@
           body: { account, password }
         });
 
-        setAuth(data.token, data.user);
+        setAuth(data.user);
         hideAllModals();
         showToast(`欢迎回来，${data.user.nickname}`, 'ok');
         await tryConsumePendingSave();
@@ -1776,7 +1759,7 @@
           body: { account, nickname, password }
         });
 
-        setAuth(data.token, data.user);
+        setAuth(data.user);
         hideAllModals();
         showToast(`注册成功，欢迎 ${data.user.nickname}`, 'ok');
         await tryConsumePendingSave();

@@ -1,0 +1,19 @@
+name = "space-strike"
+main = "src/worker.js"
+compatibility_date = "2026-06-06"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "space-strike-db"
+database_id = "f5a7e597-feac-4d63-9f65-cbfba2fab5cd"
+migrations_dir = "./migrations"
+
+[[kv_namespaces]]
+binding = "SESSION_KV"
+id = "78913808e9df40b59759343bd2c8ca43"
+preview_id = "74f438e555bf44c69b5968e9502e9998"

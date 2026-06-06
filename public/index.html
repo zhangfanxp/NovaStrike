@@ -214,10 +214,6 @@
         border-color: rgba(34, 211, 238, 0.75);
       }
 
-      .masked-secret {
-        -webkit-text-security: disc;
-      }
-
       .field-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -447,12 +443,14 @@
                 <input
                   id="register-password"
                   name="password"
-                  type="text"
-                  class="masked-secret"
+                  type="password"
                   maxlength="20"
-                  autocomplete="off"
+                  autocomplete="new-password"
                   autocapitalize="none"
+                  autocorrect="off"
                   spellcheck="false"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
                   required
                 />
               </div>
@@ -461,12 +459,14 @@
                 <input
                   id="register-confirm"
                   name="confirmPassword"
-                  type="text"
-                  class="masked-secret"
+                  type="password"
                   maxlength="20"
-                  autocomplete="off"
+                  autocomplete="new-password"
                   autocapitalize="none"
+                  autocorrect="off"
                   spellcheck="false"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
                   required
                 />
               </div>

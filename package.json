@@ -2,9 +2,15 @@
   "name": "space-strike",
   "version": "1.0.0",
   "private": true,
-  "description": "Phaser 飞行射击小游戏，Node + JSON 本地存储",
-  "main": "server/app.js",
+  "description": "Phaser 飞行射击小游戏，Cloudflare Workers + D1 + KV/JWT",
+  "main": "src/worker.js",
   "scripts": {
-    "start": "node server/app.js"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "cf:typegen": "wrangler types",
+    "legacy:start": "node server/app.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.64.0"
   }
 }
